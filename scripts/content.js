@@ -1,56 +1,84 @@
-let ulHeader = document.querySelector(".global-nav__primary-items")
+(()=>{
 
-const aViewPost = document.createElement("a");
-const liViewPost = document.createElement("li");
-const spanViewPost = document.createElement("span");
-const divOuter = document.createElement("div");
-const divInner = document.createElement("div");
-const image = document.createElement("img");
+    console.log("runnig in this tab")
 
-liViewPost.classList.add("global-nav__primary-item")
+    function loadHandler(){
 
-aViewPost.setAttribute("target" , "_blank");
-aViewPost.setAttribute("href","https://www.linkedin.com/my-items/saved-posts/");
-aViewPost.classList.add("app-aware-link", "global-nav__primary-link");
+        if(document.querySelector("#chrome_extension_saved_post")){
+            console.log("button already exists")
+            return;
+        }
 
-spanViewPost.classList.add("t-12", "break-words", "block", "t-black--light", "t-normal", "global-nav__primary-link-text")
-spanViewPost.innerHTML = "saved";
+        console.log("button is being created")
 
-divOuter.classList.add("ivm-image-view-model", "global-nav__icon-ivm");
-divInner.classList.add("ivm-view-attr__img-wrapper", "display-flex");
-image.setAttribute("src",chrome.runtime.getURL("images/floppy_disk.png"));
-image.setAttribute("id","image_saved")
+        let ulHeader = document.querySelector(".global-nav__primary-items");
 
-divInner.appendChild(image);
-divOuter.appendChild(divInner);
-aViewPost.appendChild(divOuter);
-aViewPost.appendChild(spanViewPost);
-liViewPost.appendChild(aViewPost);
-ulHeader.appendChild(liViewPost);
+        const liViewPost = document.createElement("li");
+        
+        console.log("ul", ulHeader)
+        
+        liViewPost.setAttribute("id","chrome_extension_saved_post")
+        liViewPost.classList.add("global-nav__primary-item")
+        
+        liViewPost.innerHTML = `<div>
+            <a id = "chrome_extension_anchor_tag" target= "_blank" href="https://www.linkedin.com/my-items/saved-posts/" class = "app-aware-link global-nav__primary-link">
+                <div class = "ivm-image-view-model global-nav__icon-ivm">
+                    <div class = "ivm-view-attr__img-wrapper display-flex">
+                        <img id = "image_saved" src = ${chrome.runtime.getURL("images/floppy_disk.png")} />
+                    </div>
+                </div>
+                <span class = "t-12 break-words block t-black--light t-normal global-nav__primary-link-text">saved</span>
+            </a>
+        </div>`
+        
+        ulHeader.appendChild(liViewPost);
 
-document.addEventListener("keydown", handleKeyDown);
+        document.addEventListener("keydown", handleKeyDown);
+        const aViewPost = document.querySelector("#chrome_extension_anchor_tag")
 
-function handleKeyDown(event){
-    if(event.shiftKey && event.altKey && event.code === "KeyO"){
-        aViewPost.click();
+        function handleKeyDown(event){
+            if(event.shiftKey && event.altKey && event.code === "KeyO"){
+                aViewPost.click();
+            }
+        }
+        
+        const speechRecognition = new webkitSpeechRecognition();
+        speechRecognition.continuous = true;
+        speechRecognition.lang = "en-in";
+        speechRecognition.start();
+
+        speechRecognition.onresult = (event) => {
+            let transcript = event.results[event.resultIndex][0].transcript;
+        
+            console.log(event, transcript);
+        
+            if(transcript.trim().toLowerCase().includes("open post")){
+                aViewPost.click();
+            }
+        }
+
+        speechRecognition.onstart = () => {
+            console.log("starting the recording")
+        }
+            
+        speechRecognition.onend = () => {
+            speechRecognition.start();
+        }
     }
-}
 
-const speechRecognition = new webkitSpeechRecognition();
-speechRecognition.continuous = true;
-speechRecognition.lang = "en-in";
-speechRecognition.start();
+    chrome.runtime.onMessage.addListener((message)=>{
+        const {type} = message
+        if(type === "NEW"){
 
-speechRecognition.onresult = (event) => {
-    let transcript = event.results[event.resultIndex][0].transcript;
+            setTimeout(()=>{
+                
+                loadHandler();
 
-    console.log(event);
+            },2000)
 
-    if(transcript.trim().toLowerCase().includes("open post")){
-        aViewPost.click();
-    }
-}
+            console.log("new message recieved")
+        }
+    })
+    
 
-speechRecognition.onend = () => {
-    speechRecognition.start();
-}
+})()
