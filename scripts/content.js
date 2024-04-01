@@ -1,21 +1,17 @@
 (()=>{
 
-    console.log("runnig in this tab")
 
     function loadHandler(){
 
         if(document.querySelector("#chrome_extension_saved_post")){
-            console.log("button already exists")
             return;
         }
 
-        console.log("button is being created")
 
         let ulHeader = document.querySelector(".global-nav__primary-items");
 
         const liViewPost = document.createElement("li");
-        
-        console.log("ul", ulHeader)
+
         
         liViewPost.setAttribute("id","chrome_extension_saved_post")
         liViewPost.classList.add("global-nav__primary-item")
@@ -42,32 +38,46 @@
             }
         }
         
-        const speechRecognition = new webkitSpeechRecognition();
-        speechRecognition.continuous = true;
-        speechRecognition.lang = "en-in";
+    }
+
+    function startSpeechRecognition(speechRecognition){
         speechRecognition.start();
+    }
 
-        speechRecognition.onresult = (event) => {
-            let transcript = event.results[event.resultIndex][0].transcript;
-        
-            console.log(event, transcript);
-        
-            if(transcript.trim().toLowerCase().includes("open post")){
-                aViewPost.click();
-            }
-        }
+    function stopSpeechRecognition(speechRecognition){
+        speechRecognition.stop();
+    }
 
-        speechRecognition.onstart = () => {
-            console.log("starting the recording")
-        }
-            
-        speechRecognition.onend = () => {
-            speechRecognition.start();
+    const speechRecognition = new webkitSpeechRecognition();
+    speechRecognition.continuous = true;
+    speechRecognition.lang = "en-in";
+    speechRecognition.start();
+
+    speechRecognition.onresult = (event) => {
+        let transcript = event.results[event.resultIndex][0].transcript;
+    
+        console.log(event, transcript);
+
+        const aViewPost = document.querySelector("#chrome_extension_anchor_tag")
+    
+        if(transcript.trim().toLowerCase().includes("open post")){
+            aViewPost.click();
         }
     }
 
+    speechRecognition.onstart = () => {
+        console.log("starting the recording")
+    }
+        
+    speechRecognition.onend = () => {
+        console.log("stoped listening")
+    }
+
+
     chrome.runtime.onMessage.addListener((message)=>{
-        const {type} = message
+
+        const {type} = message;
+
         if(type === "NEW"){
 
             setTimeout(()=>{
@@ -78,6 +88,17 @@
 
             console.log("new message recieved")
         }
+
+        if(type === "STOP LISTENING"){
+            console.log("stop listening in this tab")
+            stopSpeechRecognition(speechRecognition)
+        }
+
+        if(type === "START LISTENING"){
+            console.log("start listening in this tab")
+            startSpeechRecognition(speechRecognition);
+        }
+
     })
     
 
